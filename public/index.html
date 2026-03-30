@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>屏幕共享 | NthCast</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><style>path{fill:%233b82f6}@media(prefers-color-scheme:dark){path{fill:%2360a5fa}}</style><path d='M889.6 127.488H141.696c-38.656 0-70.08 31.488-70.08 70.144v467.392c0 38.656 31.488 70.144 70.08 70.144h342.976v99.456H368.384c-18.688 0-33.792 13.888-33.792 30.976s15.104 30.976 33.792 30.976h294.592c18.688 0 33.792-13.888 33.792-30.976s-15.104-30.976-33.792-30.976H546.688v-99.456H889.6c38.656 0 70.144-31.424 70.144-70.144V197.568c0-38.592-31.424-70.08-70.144-70.08z m4.864 526.592a22.272 22.272 0 0 1-22.272 22.336H159.168a22.272 22.272 0 0 1-22.272-22.336V208.512c0-12.352 10.048-22.272 22.272-22.272h713.024c12.288 0 22.272 9.92 22.272 22.272V654.08zM566.976 313.984c-13.184-10.624-23.936-2.88-23.936 15.872v49.984h-2.176c-77.056 0-208.128 89.024-209.216 168.192 0 6.336 5.12 8.128 10.048 0 24.896-44.416 129.536-67.456 182.848-67.456h18.496v52.736c0 15.744 11.648 26.496 24.896 15.872l121.856-97.792c13.184-10.56 13.184-27.904 0-38.528l-122.816-98.88z'></path></svg>">
+    <style>
+        body { background: #020617; color: #f8fafc; font-family: 'Lexend', sans-serif; overflow: hidden; }
+        .glass-header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 50; }
+        .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
+        .option-btn.active { background: #1e293b; color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .btn-group { display: flex; background: #020617; padding: 2px; border-radius: 0.75rem; border: 1px solid #1e293b; }
+        .mode-group .option-btn { padding: 10px 24px; font-size: 0.85rem; font-weight: 800; border-radius: 0.65rem; }
+        .settings-group .option-btn { flex: 1; padding: 8px 6px; font-size: 0.75rem; font-weight: 700; border-radius: 0.6rem; color: #64748b; }
+        .settings-panel, .tooltip-content { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: top right; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <header class="glass-header w-full px-4 py-4 md:h-20 md:flex md:items-center md:justify-between shrink-0">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-col">
+                <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent italic leading-none pr-2">NthCast</h1>
+                <div class="flex items-center gap-2 mt-2">
+                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600 transition-all duration-300"></span>
+                <span id="status-text" class="text-[13px] uppercase font-black text-slate-500 tracking-[0.15em]">初始化</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl pl-5 pr-1 py-1.5 focus-within:ring-2 focus-within:ring-blue-500/30">
+                    <input id="roomInput" type="text" placeholder="房间号..." class="bg-transparent outline-none text-base w-20 md:w-28 font-medium">
+                    <button onclick="copyRoomLink()" class="p-2 text-slate-500 hover:text-blue-400"><i data-lucide="link" class="w-5 h-5"></i></button>
+                </div>
+                <div class="relative">
+                    <div class="btn-group mode-group" data-group="mode"><button class="option-btn active" data-value="relay">中继</button><button class="option-btn" data-value="all">直连</button></div>
+                    <div class="absolute -top-2 -right-2 z-20 group">
+                        <div class="bg-slate-900 text-slate-500 hover:text-blue-400 rounded-full p-0.5 cursor-help border border-slate-700 shadow-lg"><i data-lucide="info" class="w-3.5 h-3.5"></i></div>
+                        <div class="tooltip-content invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-3 w-64 p-4 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl text-[11px] leading-relaxed text-slate-300 z-50">
+                            <b class="text-blue-400 block mb-1">中继模式 (Relay)</b> 流量经服务器转发，稳定性高，适用于跨网段或防火墙环境。<br><br><b class="text-indigo-400 block mb-1">直连模式 (P2P)</b> 点对点连接，延迟最低、画质最清晰，但在部分网络下可能无法打洞。
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <button id="toggleSettings" class="p-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl transition-all"><i data-lucide="sliders" class="w-5 h-5 text-slate-400"></i></button>
+                    <div id="settingsPanel" class="settings-panel invisible opacity-0 absolute top-full right-0 mt-4 w-72 p-6 bg-slate-900 border border-slate-700 rounded-[2rem] shadow-2xl z-50">
+                        <h3 class="text-xs font-black mb-6 text-blue-400 uppercase tracking-[0.2em]">画质参数调节</h3>
+                        <div class="space-y-6 settings-group">
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">分辨率</label><div class="btn-group" data-group="resolution"><button class="option-btn active" data-value="1080">1080P</button><button class="option-btn" data-value="720">720P</button><button class="option-btn" data-value="default">自动</button></div></div>
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">帧率限制</label><div class="btn-group" data-group="fps"><button class="option-btn" data-value="15">15 帧</button><button class="option-btn active" data-value="30">30 帧</button><button class="option-btn" data-value="60">60 帧</button></div></div>
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">传输码率</label><div class="btn-group" data-group="bitrate"><button class="option-btn" data-value="3000">3M</button><button class="option-btn active" data-value="8000">8M</button><button class="option-btn" data-value="15000">15M</button></div></div>
+                        </div>
+                        <p class="mt-6 text-[9px] text-slate-600 italic border-t border-white/5 pt-4 text-center">系统音频共享已默认开启</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 mt-4 md:mt-0"><button id="btnShare" class="flex-1 md:flex-none bg-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm opacity-50" disabled>开启共享</button><button id="btnWatch" class="flex-1 md:flex-none bg-slate-800 border border-slate-700 px-8 py-3.5 rounded-2xl font-bold text-sm opacity-50" disabled>观看画面</button></div>
+    </header>
+
+    <main id="main-container" class="flex-grow bg-black relative flex items-center justify-center overflow-hidden">
+        <video id="v" autoplay playsinline muted controls class="w-full h-full object-contain hidden"></video>
+        <div id="placeholder" class="flex flex-col items-center pointer-events-none transition-all duration-500">
+            <div class="relative mb-6"><i id="placeholder-icon" data-lucide="monitor-off" class="w-20 h-20 text-slate-900"></i><i id="loader-icon" data-lucide="loader-2" class="w-20 h-20 text-blue-500 animate-spin hidden"></i></div>
+            <p id="placeholder-text" class="text-xs tracking-[0.4em] uppercase font-black text-slate-800">无信号</p>
+        </div>
+    </main>
+
+    <script>
+        let CONFIG = null, pc, channel, pusher, localStream, iceServersCache, candidateBuffer = [];
+        const STORAGE_KEY = 'nth2miss_share_prefs';
+
+        function savePrefs() { const prefs = { resolution: getPref('resolution'), fps: getPref('fps'), bitrate: getPref('bitrate'), mode: getPref('mode') }; localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); }
+        function loadPrefs() { const saved = localStorage.getItem(STORAGE_KEY); if (!saved) return; try { const prefs = JSON.parse(saved); Object.keys(prefs).forEach(group => { const val = prefs[group]; const btnGroup = document.querySelector(`.btn-group[data-group="${group}"]`); if (btnGroup) btnGroup.querySelectorAll('.option-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === val)); }); } catch(e){} }
+        function getPref(g) { const b = document.querySelector(`.btn-group[data-group="${g}"] .option-btn.active`); return b ? b.dataset.value : null; }
+
+        const panel = document.getElementById('settingsPanel');
+        document.getElementById('toggleSettings').onclick = (e) => { e.stopPropagation(); panel.classList.toggle('invisible'); panel.classList.toggle('opacity-0'); };
+        document.onclick = (e) => { if (!panel.contains(e.target)) panel.classList.add('invisible', 'opacity-0'); };
+        document.querySelectorAll('.option-btn').forEach(btn => btn.onclick = function() { const g = this.parentElement; g.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); savePrefs(); });
+
+        async function initApp(room) {
+            if (pusher) return;
+
+            try {
+                // 1. 动态获取 Pusher 配置
+                const configRes = await fetch('/api/config');
+                const pusherConfig = await configRes.json();
+
+                if (!pusherConfig.key) {
+                    log("未配置 Pusher Key", "error");
+                    return;
+                }
+
+                // 2. 使用动态获取的 Key 初始化
+                pusher = new Pusher(pusherConfig.key, { 
+                    cluster: pusherConfig.cluster, 
+                    authEndpoint: "/api/auth" 
+                });
+
+                channel = pusher.subscribe(`private-room-${room}`);
+
+                return new Promise(resolve => {
+                    channel.bind('pusher:subscription_succeeded', async () => {
+                        // 3. 获取 ICE 服务器
+                        const iceRes = await fetch('/api/ice');
+                        iceServersCache = await iceRes.json();
+                        bindSignaling();
+                        resolve();
+                    });
+                    
+                    pusher.connection.bind('error', (err) => {
+                        log("Pusher 连接错误", "error");
+                    });
+                });
+            } catch (e) {
+                log("初始化失败", "error");
+                console.error(e);
+            }
+        }
+
+        function bindSignaling() {
+            channel.bind('client-offer', async (o) => { if (!localStream) { await createPC(); await pc.setRemoteDescription(new RTCSessionDescription(o)); const a = await pc.createAnswer(); a.sdp = sdpFilter(a.sdp); await pc.setLocalDescription(a); channel.trigger('client-answer', a); } });
+            channel.bind('client-answer', async (a) => { if (pc) await pc.setRemoteDescription(new RTCSessionDescription(a)); });
+            channel.bind('client-request-offer', () => { if (localStream && (!pc || pc.connectionState !== 'connected')) sendSignal(); });
+            channel.bind('client-stop-share', () => resetView());
+            channel.bind('client-candidate-batch', (d) => { if (pc && pc.remoteDescription && d.candidates) d.candidates.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{})); });
+        }
+
+        async function createPC() {
+            if (pc) pc.close();
+        pc = new RTCPeerConnection({ 
+        ...iceServersCache, 
+        iceTransportPolicy: getPref('mode'), 
+        iceCandidatePoolSize: 10 
+        });
+            pc.onconnectionstatechange = () => { if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') resetView(); };
+            pc.onicecandidate = ({candidate}) => { if (!candidate || pc.connectionState === 'connected') return; candidateBuffer.push(candidate); setTimeout(() => { if (candidateBuffer.length > 0) { channel.trigger('client-candidate-batch', { candidates: candidateBuffer }); candidateBuffer = []; } }, 500); };
+            pc.ontrack = (e) => { document.getElementById('placeholder-text').innerText = "同步信号..."; setTimeout(() => { log("正在观看", "success"); const v = document.getElementById('v'); v.classList.remove('hidden'); v.srcObject = e.streams[0]; document.getElementById('placeholder').classList.add('hidden'); }, 800); e.track.onended = () => resetView(); };
+        }
+
+        const sdpFilter = (sdp) => {
+            const bitrate = getPref('bitrate');
+            let lines = sdp.split('\r\n'), h264 = [];
+            lines.forEach(l => { if (l.includes('H264/90000')) { const m = l.match(/rtpmap:(\d+)/); if (m) h264.push(m[1]); } });
+            if (h264.length > 0) lines = lines.map(l => l.startsWith('m=video') ? [...l.split(' ').slice(0,3), ...h264, ...l.split(' ').slice(3).filter(p => !h264.includes(p))].join(' ') : l);
+            return lines.join('\r\n').replace(/a=fmtp:(\d+) (.*packetization-mode=1.*)/g, m => m + `;x-google-min-bitrate=2500;x-google-max-bitrate=${bitrate}`);
+        };
+
+        async function sendSignal() { await createPC(); localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); const o = await pc.createOffer(); o.sdp = sdpFilter(o.sdp); await pc.setLocalDescription(o); channel.trigger('client-offer', o); }
+
+        document.getElementById('btnShare').onclick = async () => {
+            const room = document.getElementById('roomInput').value || "Nth2Miss"; await initApp(room);
+            const res = getPref('resolution'), fps = parseInt(getPref('fps'));
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: res === '1080' ? 1920 : 1280 }, height: { ideal: res === '1080' ? 1080 : 720 }, frameRate: { ideal: fps }, cursor: "always" }, audio: true });
+                const vt = localStream.getVideoTracks()[0]; if (vt.applyConstraints) await vt.applyConstraints({ degradationPreference: 'maintain-resolution' });
+                document.getElementById('v').srcObject = localStream; document.getElementById('v').classList.remove('hidden'); document.getElementById('placeholder').classList.add('hidden');
+                log("正在共享", "loading"); setTimeout(() => sendSignal(), 1000);
+                vt.onended = () => { channel.trigger('client-stop-share', { room }); resetView(); };
+            } catch (e) { log("已取消", "error"); }
+        };
+
+        document.getElementById('btnWatch').onclick = async () => {
+            const room = document.getElementById('roomInput').value || "Nth2Miss";
+            document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('loader-icon').classList.remove('hidden'); document.getElementById('placeholder-text').innerText = "寻找信号...";
+            await initApp(room); setInterval(() => { if (pc && pc.connectionState === 'connected') return; log("同步中", "loading"); channel.trigger('client-request-offer', { ready: true }); }, 3000);
+        };
+
+        function resetView() { const v = document.getElementById('v'); v.pause(); v.srcObject = null; v.classList.add('hidden'); document.getElementById('placeholder').classList.remove('hidden'); document.getElementById('loader-icon').classList.add('hidden'); document.getElementById('placeholder-icon').classList.remove('hidden'); document.getElementById('placeholder-text').innerText = "无信号"; log("就绪", "success"); if (pc) { pc.close(); pc = null; } }
+        function copyRoomLink() { const r = document.getElementById('roomInput').value || "Nth2Miss"; const url = window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(r); navigator.clipboard.writeText(url).then(() => { const old = document.getElementById('status-text').innerText; log("已复制链接", "success"); setTimeout(() => log(old, "success"), 2000); }); }
+        function log(m, t) { const text = document.getElementById('status-text'), dot = document.getElementById('status-dot'); if(text) text.innerText = m; if(dot) dot.className = `w-2 h-2 rounded-full ${t === 'success' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : t === 'error' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'}`; }
+
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('room')) document.getElementById('roomInput').value = urlParams.get('room');
+            loadPrefs(); lucide.createIcons();
+            document.getElementById('btnShare').disabled = document.getElementById('btnWatch').disabled = false;
+            document.getElementById('btnShare').classList.remove('opacity-50'); document.getElementById('btnWatch').classList.remove('opacity-50');
+            log("就绪", "success");
+        };
+    </script>
+</body>
+</html>
