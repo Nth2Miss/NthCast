@@ -1,11 +1,11 @@
 # 🚀 NthScreen
 
-**NthScreen** 是一款基于 WebRTC 技术的高性能、低延迟网页屏幕共享工具。通过强制 H.264 硬件编码和高性能信令传输，它能够实现在浏览器中近乎原生的共享体验。
+**NthScreen** 是一款基于 WebRTC 技术的网页屏幕共享工具。通过强制 H.264 硬件编码和高性能信令传输，它能够实现在浏览器中近乎原生的共享体验。
 
 > **当前版本：** v1.0 (Cloudflare Pages Functions 架构)
 > 
 > 
-> **核心优势：** 60FPS 支持 / 15Mbps 码率 / 无需独立 Worker / 自动保存偏好 / 系统音频共享
+> **核心优势：** 60FPS 支持 / 15Mbps 码率 / 无需独立 Worker
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-orange?style=for-the-badge&logo=cloudflare)](https://deploy.cloudflare.com/?url=https://github.com/Nth2Miss/NthScreen)
 [![Demo Status](https://img.shields.io/website?url=https%3A%2F%2Fscreen.52520721.xyz&style=for-the-badge&label=Live%20Demo)](https://screen.52520721.xyz)
