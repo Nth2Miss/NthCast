@@ -69,119 +69,310 @@
         </div>
     </main>
 
-    <script>
-        let CONFIG = null, pc, channel, pusher, localStream, iceServersCache, candidateBuffer = [];
-        const STORAGE_KEY = 'nth2miss_share_prefs';
+    <script>// 缓存常用的 DOM 元素以提升性能
+const els = {
+    v: document.getElementById('v'),
+    placeholder: document.getElementById('placeholder'),
+    placeholderIcon: document.getElementById('placeholder-icon'),
+    loaderIcon: document.getElementById('loader-icon'),
+    placeholderText: document.getElementById('placeholder-text'),
+    roomInput: document.getElementById('roomInput'),
+    btnShare: document.getElementById('btnShare'),
+    btnWatch: document.getElementById('btnWatch'),
+    statusText: document.getElementById('status-text'),
+    statusDot: document.getElementById('status-dot')
+};
 
-        function savePrefs() { const prefs = { resolution: getPref('resolution'), fps: getPref('fps'), bitrate: getPref('bitrate'), mode: getPref('mode') }; localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); }
-        function loadPrefs() { const saved = localStorage.getItem(STORAGE_KEY); if (!saved) return; try { const prefs = JSON.parse(saved); Object.keys(prefs).forEach(group => { const val = prefs[group]; const btnGroup = document.querySelector(`.btn-group[data-group="${group}"]`); if (btnGroup) btnGroup.querySelectorAll('.option-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === val)); }); } catch(e){} }
-        function getPref(g) { const b = document.querySelector(`.btn-group[data-group="${g}"] .option-btn.active`); return b ? b.dataset.value : null; }
+let CONFIG = null, pc = null, channel = null, pusher = null, localStream = null;
+let iceServersCache = null;
+let candidateBuffer = [];
+let candidateTimeout = null;
+const STORAGE_KEY = 'nth2miss_share_prefs';
 
-        const panel = document.getElementById('settingsPanel');
-        document.getElementById('toggleSettings').onclick = (e) => { e.stopPropagation(); panel.classList.toggle('invisible'); panel.classList.toggle('opacity-0'); };
-        document.onclick = (e) => { if (!panel.contains(e.target)) panel.classList.add('invisible', 'opacity-0'); };
-        document.querySelectorAll('.option-btn').forEach(btn => btn.onclick = function() { const g = this.parentElement; g.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); savePrefs(); });
+// --- 偏好设置管理 ---
+function savePrefs() { 
+    const prefs = { 
+        resolution: getPref('resolution'), 
+        fps: getPref('fps'), 
+        bitrate: getPref('bitrate'), 
+        mode: getPref('mode') 
+    }; 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); 
+}
 
-        async function initApp(room) {
-            if (pusher) return;
-
-            try {
-                // 1. 动态获取 Pusher 配置
-                const configRes = await fetch('/api/config');
-                const pusherConfig = await configRes.json();
-
-                if (!pusherConfig.key) {
-                    log("未配置 Pusher Key", "error");
-                    return;
-                }
-
-                // 2. 使用动态获取的 Key 初始化
-                pusher = new Pusher(pusherConfig.key, { 
-                    cluster: pusherConfig.cluster, 
-                    authEndpoint: "/api/auth" 
+function loadPrefs() { 
+    const saved = localStorage.getItem(STORAGE_KEY); 
+    if (!saved) return; 
+    try { 
+        const prefs = JSON.parse(saved); 
+        Object.keys(prefs).forEach(group => { 
+            const val = prefs[group]; 
+            const btnGroup = document.querySelector(`.btn-group[data-group="${group}"]`); 
+            if (btnGroup) {
+                btnGroup.querySelectorAll('.option-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.value === val);
                 });
-
-                channel = pusher.subscribe(`private-room-${room}`);
-
-                return new Promise(resolve => {
-                    channel.bind('pusher:subscription_succeeded', async () => {
-                        // 3. 获取 ICE 服务器
-                        const iceRes = await fetch('/api/ice');
-                        iceServersCache = await iceRes.json();
-                        bindSignaling();
-                        resolve();
-                    });
-                    
-                    pusher.connection.bind('error', (err) => {
-                        log("Pusher 连接错误", "error");
-                    });
-                });
-            } catch (e) {
-                log("初始化失败", "error");
-                console.error(e);
             }
+        }); 
+    } catch(e) { console.error("解析配置失败", e); } 
+}
+
+function getPref(g) { 
+    const b = document.querySelector(`.btn-group[data-group="${g}"] .option-btn.active`); 
+    return b ? b.dataset.value : null; 
+}
+
+// --- UI 交互绑定 ---
+const panel = document.getElementById('settingsPanel');
+document.getElementById('toggleSettings').onclick = (e) => { 
+    e.stopPropagation(); 
+    panel.classList.toggle('invisible'); 
+    panel.classList.toggle('opacity-0'); 
+};
+
+document.onclick = (e) => { 
+    if (!panel.contains(e.target)) {
+        panel.classList.add('invisible', 'opacity-0'); 
+    }
+};
+
+document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.onclick = function() { 
+        const g = this.parentElement; 
+        g.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active')); 
+        this.classList.add('active'); 
+        savePrefs(); 
+    };
+});
+
+// --- WebRTC 与信令核心逻辑 ---
+async function initApp(room) {
+    if (pusher) return;
+    try {
+        const [configRes, iceRes] = await Promise.all([
+            fetch('/api/config'),
+            fetch('/api/ice')
+        ]);
+        
+        const pusherConfig = await configRes.json();
+        iceServersCache = await iceRes.json();
+
+        if (!pusherConfig.key) {
+            log("未配置 Pusher Key", "error");
+            return;
         }
 
-        function bindSignaling() {
-            channel.bind('client-offer', async (o) => { if (!localStream) { await createPC(); await pc.setRemoteDescription(new RTCSessionDescription(o)); const a = await pc.createAnswer(); a.sdp = sdpFilter(a.sdp); await pc.setLocalDescription(a); channel.trigger('client-answer', a); } });
-            channel.bind('client-answer', async (a) => { if (pc) await pc.setRemoteDescription(new RTCSessionDescription(a)); });
-            channel.bind('client-request-offer', () => { if (localStream && (!pc || pc.connectionState !== 'connected')) sendSignal(); });
-            channel.bind('client-stop-share', () => resetView());
-            channel.bind('client-candidate-batch', (d) => { if (pc && pc.remoteDescription && d.candidates) d.candidates.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{})); });
-        }
+        pusher = new Pusher(pusherConfig.key, { 
+            cluster: pusherConfig.cluster, 
+            authEndpoint: "/api/auth" 
+        });
 
-        async function createPC() {
-            if (pc) pc.close();
-        pc = new RTCPeerConnection({ 
+        channel = pusher.subscribe(`private-room-${room}`);
+
+        return new Promise(resolve => {
+            channel.bind('pusher:subscription_succeeded', () => {
+                bindSignaling();
+                resolve();
+            });
+            pusher.connection.bind('error', (err) => log("信令连接错误", "error"));
+        });
+    } catch (e) {
+        log("初始化失败", "error");
+        console.error(e);
+    }
+}
+
+function bindSignaling() {
+    channel.bind('client-offer', async (o) => { 
+        if (!localStream) { 
+            await createPC(); 
+            await pc.setRemoteDescription(new RTCSessionDescription(o)); 
+            const a = await pc.createAnswer(); 
+            a.sdp = sdpFilter(a.sdp); 
+            await pc.setLocalDescription(a); 
+            channel.trigger('client-answer', a); 
+        } 
+    });
+    
+    channel.bind('client-answer', async (a) => { 
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(a)); 
+    });
+    
+    channel.bind('client-request-offer', () => { 
+        if (localStream && (!pc || pc.connectionState !== 'connected')) sendSignal(); 
+    });
+    
+    channel.bind('client-stop-share', () => resetView());
+    
+    channel.bind('client-candidate-batch', (d) => { 
+        if (pc && pc.remoteDescription && d.candidates) {
+            d.candidates.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn(e))); 
+        }
+    });
+}
+
+async function createPC() {
+    if (pc) pc.close();
+    pc = new RTCPeerConnection({ 
         ...iceServersCache, 
         iceTransportPolicy: getPref('mode'), 
         iceCandidatePoolSize: 10 
+    });
+
+    pc.onconnectionstatechange = () => { 
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') resetView(); 
+    };
+
+    pc.onicecandidate = ({candidate}) => { 
+        if (!candidate || pc.connectionState === 'connected') return; 
+        candidateBuffer.push(candidate); 
+        clearTimeout(candidateTimeout);
+        candidateTimeout = setTimeout(() => { 
+            if (candidateBuffer.length > 0) { 
+                channel.trigger('client-candidate-batch', { candidates: candidateBuffer }); 
+                candidateBuffer = []; 
+            } 
+        }, 500); 
+    };
+
+    pc.ontrack = (e) => { 
+        els.placeholderText.innerText = "同步信号..."; 
+        setTimeout(() => { 
+            log("正在观看", "success"); 
+            els.v.classList.remove('hidden'); 
+            els.v.srcObject = e.streams[0]; 
+            els.placeholder.classList.add('hidden'); 
+        }, 800); 
+        e.track.onended = () => resetView(); 
+    };
+}
+
+const sdpFilter = (sdp) => {
+    const bitrate = getPref('bitrate');
+    let lines = sdp.split('\r\n'), h264 = [];
+    lines.forEach(l => { 
+        if (l.includes('H264/90000')) { 
+            const m = l.match(/rtpmap:(\d+)/); 
+            if (m) h264.push(m[1]); 
+        } 
+    });
+    if (h264.length > 0) {
+        lines = lines.map(l => l.startsWith('m=video') ? [...l.split(' ').slice(0,3), ...h264, ...l.split(' ').slice(3).filter(p => !h264.includes(p))].join(' ') : l);
+    }
+    return lines.join('\r\n').replace(/a=fmtp:(\d+) (.*packetization-mode=1.*)/g, m => m + `;x-google-min-bitrate=2500;x-google-max-bitrate=${bitrate}`);
+};
+
+async function sendSignal() { 
+    await createPC(); 
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); 
+    const o = await pc.createOffer(); 
+    o.sdp = sdpFilter(o.sdp); 
+    await pc.setLocalDescription(o); 
+    channel.trigger('client-offer', o); 
+}
+
+// --- 共享与观看触发 ---
+els.btnShare.onclick = async () => {
+    const room = els.roomInput.value || "Nth2Miss"; 
+    await initApp(room);
+    const res = getPref('resolution'), fps = parseInt(getPref('fps'));
+    try {
+        localStream = await navigator.mediaDevices.getDisplayMedia({ 
+            video: { 
+                width: { ideal: res === '1080' ? 1920 : 1280 }, 
+                height: { ideal: res === '1080' ? 1080 : 720 }, 
+                frameRate: { ideal: fps }, 
+                cursor: "always" 
+            }, 
+            audio: true 
         });
-            pc.onconnectionstatechange = () => { if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') resetView(); };
-            pc.onicecandidate = ({candidate}) => { if (!candidate || pc.connectionState === 'connected') return; candidateBuffer.push(candidate); setTimeout(() => { if (candidateBuffer.length > 0) { channel.trigger('client-candidate-batch', { candidates: candidateBuffer }); candidateBuffer = []; } }, 500); };
-            pc.ontrack = (e) => { document.getElementById('placeholder-text').innerText = "同步信号..."; setTimeout(() => { log("正在观看", "success"); const v = document.getElementById('v'); v.classList.remove('hidden'); v.srcObject = e.streams[0]; document.getElementById('placeholder').classList.add('hidden'); }, 800); e.track.onended = () => resetView(); };
+        const vt = localStream.getVideoTracks()[0]; 
+        if (vt.applyConstraints) await vt.applyConstraints({ degradationPreference: 'maintain-resolution' });
+        
+        els.v.srcObject = localStream; 
+        els.v.classList.remove('hidden'); 
+        els.placeholder.classList.add('hidden');
+        log("正在共享", "loading"); 
+        
+        setTimeout(() => sendSignal(), 1000);
+        vt.onended = () => { 
+            channel.trigger('client-stop-share', { room }); 
+            resetView(); 
+        };
+    } catch (e) { log("已取消或拒绝授权", "error"); }
+};
+
+els.btnWatch.onclick = async () => {
+    const room = els.roomInput.value || "Nth2Miss";
+    els.placeholderIcon.classList.add('hidden'); 
+    els.loaderIcon.classList.remove('hidden'); 
+    els.placeholderText.innerText = "寻找信号...";
+    await initApp(room); 
+    
+    // 轮询请求信号直到连接建立
+    const pollInterval = setInterval(() => { 
+        if (pc && pc.connectionState === 'connected') {
+            clearInterval(pollInterval);
+            return;
         }
+        log("同步中", "loading"); 
+        channel.trigger('client-request-offer', { ready: true }); 
+    }, 3000);
+};
 
-        const sdpFilter = (sdp) => {
-            const bitrate = getPref('bitrate');
-            let lines = sdp.split('\r\n'), h264 = [];
-            lines.forEach(l => { if (l.includes('H264/90000')) { const m = l.match(/rtpmap:(\d+)/); if (m) h264.push(m[1]); } });
-            if (h264.length > 0) lines = lines.map(l => l.startsWith('m=video') ? [...l.split(' ').slice(0,3), ...h264, ...l.split(' ').slice(3).filter(p => !h264.includes(p))].join(' ') : l);
-            return lines.join('\r\n').replace(/a=fmtp:(\d+) (.*packetization-mode=1.*)/g, m => m + `;x-google-min-bitrate=2500;x-google-max-bitrate=${bitrate}`);
-        };
+// 修复点：彻底释放硬件轨道资源
+function resetView() { 
+    els.v.pause(); 
+    els.v.srcObject = null; 
+    els.v.classList.add('hidden'); 
+    els.placeholder.classList.remove('hidden'); 
+    els.loaderIcon.classList.add('hidden'); 
+    els.placeholderIcon.classList.remove('hidden'); 
+    els.placeholderText.innerText = "无信号"; 
+    
+    // 释放本地流（关闭摄像头/屏幕捕捉）
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    if (pc) { 
+        pc.close(); 
+        pc = null; 
+    }
+    log("就绪", "success"); 
+}
 
-        async function sendSignal() { await createPC(); localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); const o = await pc.createOffer(); o.sdp = sdpFilter(o.sdp); await pc.setLocalDescription(o); channel.trigger('client-offer', o); }
+function copyRoomLink() { 
+    const r = els.roomInput.value || "Nth2Miss"; 
+    const url = window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(r); 
+    navigator.clipboard.writeText(url).then(() => { 
+        const old = els.statusText.innerText; 
+        log("已复制链接", "success"); 
+        setTimeout(() => log(old, "success"), 2000); 
+    }); 
+}
 
-        document.getElementById('btnShare').onclick = async () => {
-            const room = document.getElementById('roomInput').value || "Nth2Miss"; await initApp(room);
-            const res = getPref('resolution'), fps = parseInt(getPref('fps'));
-            try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: { width: { ideal: res === '1080' ? 1920 : 1280 }, height: { ideal: res === '1080' ? 1080 : 720 }, frameRate: { ideal: fps }, cursor: "always" }, audio: true });
-                const vt = localStream.getVideoTracks()[0]; if (vt.applyConstraints) await vt.applyConstraints({ degradationPreference: 'maintain-resolution' });
-                document.getElementById('v').srcObject = localStream; document.getElementById('v').classList.remove('hidden'); document.getElementById('placeholder').classList.add('hidden');
-                log("正在共享", "loading"); setTimeout(() => sendSignal(), 1000);
-                vt.onended = () => { channel.trigger('client-stop-share', { room }); resetView(); };
-            } catch (e) { log("已取消", "error"); }
-        };
+function log(m, t) { 
+    if(els.statusText) els.statusText.innerText = m; 
+    if(els.statusDot) {
+        els.statusDot.className = `w-2 h-2 rounded-full ${
+            t === 'success' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
+            t === 'error' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'
+        }`;
+    }
+}
 
-        document.getElementById('btnWatch').onclick = async () => {
-            const room = document.getElementById('roomInput').value || "Nth2Miss";
-            document.getElementById('placeholder-icon').classList.add('hidden'); document.getElementById('loader-icon').classList.remove('hidden'); document.getElementById('placeholder-text').innerText = "寻找信号...";
-            await initApp(room); setInterval(() => { if (pc && pc.connectionState === 'connected') return; log("同步中", "loading"); channel.trigger('client-request-offer', { ready: true }); }, 3000);
-        };
-
-        function resetView() { const v = document.getElementById('v'); v.pause(); v.srcObject = null; v.classList.add('hidden'); document.getElementById('placeholder').classList.remove('hidden'); document.getElementById('loader-icon').classList.add('hidden'); document.getElementById('placeholder-icon').classList.remove('hidden'); document.getElementById('placeholder-text').innerText = "无信号"; log("就绪", "success"); if (pc) { pc.close(); pc = null; } }
-        function copyRoomLink() { const r = document.getElementById('roomInput').value || "Nth2Miss"; const url = window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(r); navigator.clipboard.writeText(url).then(() => { const old = document.getElementById('status-text').innerText; log("已复制链接", "success"); setTimeout(() => log(old, "success"), 2000); }); }
-        function log(m, t) { const text = document.getElementById('status-text'), dot = document.getElementById('status-dot'); if(text) text.innerText = m; if(dot) dot.className = `w-2 h-2 rounded-full ${t === 'success' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : t === 'error' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'}`; }
-
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('room')) document.getElementById('roomInput').value = urlParams.get('room');
-            loadPrefs(); lucide.createIcons();
-            document.getElementById('btnShare').disabled = document.getElementById('btnWatch').disabled = false;
-            document.getElementById('btnShare').classList.remove('opacity-50'); document.getElementById('btnWatch').classList.remove('opacity-50');
-            log("就绪", "success");
-        };
-    </script>
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('room')) els.roomInput.value = urlParams.get('room');
+    loadPrefs(); 
+    lucide.createIcons();
+    els.btnShare.disabled = els.btnWatch.disabled = false;
+    els.btnShare.classList.remove('opacity-50'); 
+    els.btnWatch.classList.remove('opacity-50');
+    log("就绪", "success");
+};    
+</script>
 </body>
 </html>

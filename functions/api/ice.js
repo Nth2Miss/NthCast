@@ -33,11 +33,11 @@ export async function onRequestGet(context) {
 
         const data = await response.json();
         
-        // 直接返回包含 { "iceServers": [...] } 的对象
+        // 降低请求延迟，同时避免高并发时调用 API 达到速率限制
         return new Response(JSON.stringify(data), {
             headers: { 
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'public, s-maxage=300, max-age=60'
             }
         });
     } catch (e) {
