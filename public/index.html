@@ -77,6 +77,13 @@
                             <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">分辨率</label><div class="btn-group" data-group="resolution"><button class="option-btn active" data-value="1080">1080P</button><button class="option-btn" data-value="720">720P</button><button class="option-btn" data-value="default">自动</button></div></div>
                             <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">帧率限制</label><div class="btn-group" data-group="fps"><button class="option-btn" data-value="15">15 帧</button><button class="option-btn active" data-value="30">30 帧</button><button class="option-btn" data-value="60">60 帧</button></div></div>
                             <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">传输码率</label><div class="btn-group" data-group="bitrate"><button class="option-btn" data-value="3000">3M</button><button class="option-btn active" data-value="8000">8M</button><button class="option-btn" data-value="15000">15M</button></div></div>
+                            <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">画面偏好</label>
+                            <div class="btn-group" data-group="scene">
+                                <button class="option-btn active" data-value="motion">视频/游戏</button>
+                                <button class="option-btn" data-value="detail">文字/代码</button>
+                            </div>
+                        </div>
                         </div>
                         <p class="mt-6 text-[9px] text-slate-600 italic border-t border-white/5 pt-4 text-center">系统音频共享已默认开启</p>
                     </div>
@@ -132,7 +139,8 @@ function savePrefs() {
         resolution: getPref('resolution'), 
         fps: getPref('fps'), 
         bitrate: getPref('bitrate'), 
-        mode: getPref('mode') 
+        mode: getPref('mode'), 
+        scene: getPref('scene')
     }; 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); 
 }
@@ -369,7 +377,7 @@ els.btnShare.onclick = async () => {
         
         // 3. 核心画质优化：注入内容提示 'detail'。
         // 这会强制底层 H.264 编码器优化锐度，保证代码、网页文字边缘绝对清晰，不发虚。
-        vt.contentHint = 'detail';
+        vt.contentHint = getPref('scene') || 'detail';
         
         // 4. 降级策略改为 'balanced'
         // 网络极好时，跑满你设置的 1080P 60FPS。
