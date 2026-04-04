@@ -84,8 +84,8 @@ const els = {
     btnWatch: document.getElementById('btnWatch'),
     statusText: document.getElementById('status-text'),
     statusDot: document.getElementById('status-dot'),
-    unmuteBtn: document.getElementById('unmuteBtn'),
-    volIcon: document.getElementById('volIcon')
+    unmuteBtn: document.getElementById('unmuteBtn'), // 引用按钮
+    volIcon: document.getElementById('volIcon')     // 引用图标
 };
 
 let CONFIG = null, pc = null, channel = null, pusher = null, localStream = null;
@@ -232,7 +232,20 @@ async function createPC() {
     });
 
     pc.onconnectionstatechange = () => { 
-        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') resetView(); 
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+            // 区分身份处理断开逻辑
+            if (localStream) {
+                // 如果是共享端：仅清理当前的 WebRTC 连接，保留本地画面和流
+                if (pc) {
+                    pc.close();
+                    pc = null;
+                }
+                log("观众已离开，等待新连接", "loading");
+            } else {
+                // 如果是观众端：共享停止，执行彻底重置
+                resetView(); 
+            }
+        }
     };
 
     pc.onicecandidate = ({candidate}) => { 
@@ -254,7 +267,6 @@ async function createPC() {
             els.v.classList.remove('hidden'); 
             els.v.srcObject = e.streams[0]; 
             els.placeholder.classList.add('hidden'); 
-            // 显示音量按钮
             if (els.unmuteBtn) els.unmuteBtn.classList.remove('hidden'); 
         }, 800); 
         e.track.onended = () => resetView(); 
