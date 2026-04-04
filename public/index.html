@@ -67,9 +67,12 @@
             <div class="relative mb-6"><i id="placeholder-icon" data-lucide="monitor-off" class="w-20 h-20 text-slate-900"></i><i id="loader-icon" data-lucide="loader-2" class="w-20 h-20 text-blue-500 animate-spin hidden"></i></div>
             <p id="placeholder-text" class="text-xs tracking-[0.4em] uppercase font-black text-slate-800">无信号</p>
         </div>
+        <button id="unmuteBtn" class="absolute bottom-10 right-6 z-50 p-4 bg-slate-900/80 backdrop-blur-md rounded-full border border-slate-700 shadow-2xl hidden">
+            <i id="volIcon" data-lucide="volume-x" class="w-6 h-6 text-blue-400"></i>
+        </button>
     </main>
 
-    <script>// 缓存常用的 DOM 元素以提升性能
+    <script>
 const els = {
     v: document.getElementById('v'),
     placeholder: document.getElementById('placeholder'),
@@ -80,7 +83,9 @@ const els = {
     btnShare: document.getElementById('btnShare'),
     btnWatch: document.getElementById('btnWatch'),
     statusText: document.getElementById('status-text'),
-    statusDot: document.getElementById('status-dot')
+    statusDot: document.getElementById('status-dot'),
+    unmuteBtn: document.getElementById('unmuteBtn'),
+    volIcon: document.getElementById('volIcon')
 };
 
 let CONFIG = null, pc = null, channel = null, pusher = null, localStream = null;
@@ -144,6 +149,13 @@ document.querySelectorAll('.option-btn').forEach(btn => {
         savePrefs(); 
     };
 });
+
+// 音量切换逻辑
+els.unmuteBtn.onclick = () => {
+    els.v.muted = !els.v.muted;
+    els.volIcon.setAttribute('data-lucide', els.v.muted ? 'volume-x' : 'volume-2');
+    lucide.createIcons(); // 刷新图标显示
+};
 
 // --- WebRTC 与信令核心逻辑 ---
 async function initApp(room) {
@@ -242,6 +254,8 @@ async function createPC() {
             els.v.classList.remove('hidden'); 
             els.v.srcObject = e.streams[0]; 
             els.placeholder.classList.add('hidden'); 
+            // 显示音量按钮
+            if (els.unmuteBtn) els.unmuteBtn.classList.remove('hidden'); 
         }, 800); 
         e.track.onended = () => resetView(); 
     };
@@ -309,7 +323,6 @@ els.btnWatch.onclick = async () => {
     els.placeholderText.innerText = "寻找信号...";
     await initApp(room); 
     
-    // 轮询请求信号直到连接建立
     const pollInterval = setInterval(() => { 
         if (pc && pc.connectionState === 'connected') {
             clearInterval(pollInterval);
@@ -320,17 +333,20 @@ els.btnWatch.onclick = async () => {
     }, 3000);
 };
 
-// 修复点：彻底释放硬件轨道资源
 function resetView() { 
     els.v.pause(); 
     els.v.srcObject = null; 
     els.v.classList.add('hidden'); 
+    // 重置音量状态与按钮
+    if (els.unmuteBtn) els.unmuteBtn.classList.add('hidden');
+    els.v.muted = true;
+    els.volIcon.setAttribute('data-lucide', 'volume-x');
+
     els.placeholder.classList.remove('hidden'); 
     els.loaderIcon.classList.add('hidden'); 
     els.placeholderIcon.classList.remove('hidden'); 
     els.placeholderText.innerText = "无信号"; 
     
-    // 释放本地流（关闭摄像头/屏幕捕捉）
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         localStream = null;
