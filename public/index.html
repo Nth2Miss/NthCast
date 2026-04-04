@@ -18,7 +18,7 @@
             z-index: 50; 
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .header-collapsed { transform: translateY(-100%); position: absolute; }
+        .header-collapsed { transform: translateY(-100%); position: absolute !important; }
         .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
         .option-btn.active { background: #1e293b; color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .btn-group { display: flex; background: #020617; padding: 2px; border-radius: 0.75rem; border: 1px solid #1e293b; }
@@ -31,8 +31,7 @@
             bottom: -24px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.95);
             border-top: none;
             border-radius: 0 0 12px 12px;
             padding: 4px 16px;
@@ -42,6 +41,8 @@
             align-items: center;
             justify-content: center;
         }
+        #headerToggle svg { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .header-collapsed #headerToggle svg { transform: rotate(180deg); }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -122,9 +123,7 @@ const STORAGE_KEY = 'nth2miss_share_prefs';
 
 // --- 状态栏收起逻辑 ---
 els.headerToggle.onclick = () => {
-    const isCollapsed = els.header.classList.toggle('header-collapsed');
-    els.toggleIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-down' : 'chevron-up');
-    lucide.createIcons();
+    els.header.classList.toggle('header-collapsed');
 };
 
 // --- 偏好设置管理 ---
