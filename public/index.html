@@ -22,7 +22,6 @@
         .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
         .option-btn.active { background: #1e293b; color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .btn-group { display: flex; background: #020617; padding: 2px; border-radius: 0.75rem; border: 1px solid #1e293b; }
-        .mode-group .option-btn { padding: 10px 24px; font-size: 0.85rem; font-weight: 800; border-radius: 0.65rem; }
         .settings-group .option-btn { flex: 1; padding: 8px 6px; font-size: 0.75rem; font-weight: 700; border-radius: 0.6rem; color: #64748b; }
         .settings-panel, .tooltip-content { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: top right; }
         #headerToggle {
@@ -59,30 +58,15 @@
                     <input id="roomInput" type="text" placeholder="房间号..." class="bg-transparent outline-none text-base w-20 md:w-28 font-medium">
                     <button onclick="copyRoomLink()" class="p-2 text-slate-500 hover:text-blue-400"><i data-lucide="link" class="w-5 h-5"></i></button>
                 </div>
-                <div class="relative">
-                    <div class="btn-group mode-group" data-group="mode"><button class="option-btn active" data-value="relay">中继</button><button class="option-btn" data-value="all">直连</button></div>
-                    <div class="absolute -top-2 -right-2 z-20 group">
-                        <div class="bg-slate-900 text-slate-500 hover:text-blue-400 rounded-full p-0.5 cursor-help border border-slate-700 shadow-lg"><i data-lucide="info" class="w-3.5 h-3.5"></i></div>
-                        <div class="tooltip-content invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-3 w-64 p-4 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl text-[11px] leading-relaxed text-slate-300 z-50">
-                            <b class="text-blue-400 block mb-1">中继模式 (Relay)</b> 流量经服务器转发，稳定性高。<br><br><b class="text-indigo-400 block mb-1">直连模式 (P2P)</b> 点对点连接，延迟最低。
-                        </div>
-                    </div>
-                </div>
+                
                 <div class="relative">
                     <button id="toggleSettings" class="p-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl transition-all"><i data-lucide="sliders" class="w-5 h-5 text-slate-400"></i></button>
                     <div id="settingsPanel" class="settings-panel invisible opacity-0 absolute top-full right-0 mt-4 w-72 p-6 bg-slate-900 border border-slate-700 rounded-[2rem] shadow-2xl z-50">
-                        <h3 class="text-xs font-black mb-6 text-blue-400 uppercase tracking-[0.2em]">画质参数调节</h3>
+                        <h3 class="text-xs font-black mb-6 text-blue-400 uppercase tracking-[0.2em]">基础参数配置</h3>
                         <div class="space-y-6 settings-group">
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">分辨率</label><div class="btn-group" data-group="resolution"><button class="option-btn active" data-value="1080">1080P</button><button class="option-btn" data-value="720">720P</button><button class="option-btn" data-value="default">自动</button></div></div>
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">帧率限制</label><div class="btn-group" data-group="fps"><button class="option-btn" data-value="15">15 帧</button><button class="option-btn active" data-value="30">30 帧</button><button class="option-btn" data-value="60">60 帧</button></div></div>
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">传输码率</label><div class="btn-group" data-group="bitrate"><button class="option-btn" data-value="3000">3M</button><button class="option-btn active" data-value="8000">8M</button><button class="option-btn" data-value="15000">15M</button></div></div>
-                            <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">画面偏好</label>
-                            <div class="btn-group" data-group="scene">
-                                <button class="option-btn active" data-value="motion">视频/游戏</button>
-                                <button class="option-btn" data-value="detail">文字/代码</button>
-                            </div>
-                        </div>
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">分辨率上限</label><div class="btn-group" data-group="resolution"><button class="option-btn active" data-value="1080">1080P</button><button class="option-btn" data-value="720">720P</button><button class="option-btn" data-value="default">自动</button></div></div>
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">帧率上限</label><div class="btn-group" data-group="fps"><button class="option-btn" data-value="15">15 帧</button><button class="option-btn active" data-value="30">30 帧</button><button class="option-btn" data-value="60">60 帧</button></div></div>
+                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">传输码率上限</label><div class="btn-group" data-group="bitrate"><button class="option-btn" data-value="3000">3M</button><button class="option-btn active" data-value="8000">8M</button><button class="option-btn" data-value="15000">15M</button></div></div>
                         </div>
                     </div>
                 </div>
@@ -133,7 +117,7 @@
         }
         
         function savePrefs() { 
-            const prefs = { resolution: getPref('resolution'), fps: getPref('fps'), bitrate: getPref('bitrate'), mode: getPref('mode'), scene: getPref('scene') }; 
+            const prefs = { resolution: getPref('resolution'), fps: getPref('fps'), bitrate: getPref('bitrate') }; 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs)); 
         }
         
@@ -214,7 +198,7 @@
                 try {
                     await pc.addIceCandidate(c);
                 } catch (e) {
-                    console.warn('添加缓存的候选者失败', e);
+                    console.warn('添加候选者失败', e);
                 }
             }
             pendingCandidates = [];
@@ -268,7 +252,8 @@
         
             pc = new RTCPeerConnection({ 
                 iceServers: servers,
-                iceTransportPolicy: getPref('mode') === 'relay' ? 'relay' : 'all'
+                // 核心改动 1：设为 'all'，自动协商路由，能直连就直连，不行就自动走中继
+                iceTransportPolicy: 'all' 
             });
         
             pc.onconnectionstatechange = () => { 
@@ -307,6 +292,52 @@
             };
         }
         
+        const sdpFilter = (sdp) => {
+            const bitrate = getPref('bitrate') || '8000';
+            try {
+                let lines = sdp.split(/\r?\n/);
+                let videoIndex = lines.findIndex(l => l.startsWith('m=video'));
+
+                if (videoIndex !== -1) {
+                    let insertPos = videoIndex + 1;
+                    for (let i = videoIndex + 1; i < lines.length; i++) {
+                        if (lines[i].startsWith('m=')) break; 
+                        if (lines[i].startsWith('c=IN')) insertPos = i + 1;
+                    }
+                    if (!lines.some(l => l.startsWith('b=AS:'))) {
+                        lines.splice(insertPos, 0, `b=AS:${bitrate}`);
+                    }
+                }
+
+                let modifiedSdp = lines.join('\r\n');
+
+                // 核心改动 2：安全平衡的底线码率（1200kbps）。
+                // 这个数值既能保证画面看得清（不过分马赛克），又不会因为过高导致网络拥塞而直接断线。
+                const minBitrate = '1200';
+                
+                modifiedSdp = modifiedSdp.replace(
+                    /(a=fmtp:\d+\s+.*packetization-mode=1.*)/g,
+                    (match) => {
+                        if (match.includes('x-google-min-bitrate')) return match;
+                        return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
+                    }
+                );
+
+                modifiedSdp = modifiedSdp.replace(
+                    /(a=fmtp:\d+\s+)(?!.*packetization-mode)(?!.*apt=)(.*)/g,
+                    (match, p1, p2) => {
+                        if (match.includes('x-google-') || match.includes('level-asymmetry')) return match;
+                        return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
+                    }
+                );
+
+                return modifiedSdp.endsWith('\r\n') ? modifiedSdp : modifiedSdp + '\r\n';
+            } catch (e) {
+                console.warn("SDP 注入失败，使用默认", e);
+                return sdp;
+            }
+        };
+
         async function sendSignal() { 
             if(!localStream) return;
             await createPC(); 
@@ -314,7 +345,6 @@
             localStream.getTracks().forEach(t => {
                 const sender = pc.addTrack(t, localStream);
                 
-                // 动态强制设定最大发送码率 API
                 if (t.kind === 'video') {
                     const params = sender.getParameters();
                     if (!params.encodings) params.encodings = [{}];
@@ -322,11 +352,16 @@
                     const maxBitrate = parseInt(getPref('bitrate') || '8000') * 1000;
                     params.encodings[0].maxBitrate = maxBitrate;
                     
-                    sender.setParameters(params).catch(e => console.warn("动态码率设置失败", e));
+                    // 核心改动 3：自动平衡策略 'balanced'。
+                    // 放弃极端的保分辨率或保帧率，让浏览器根据网速智能双向妥协，达到最佳观感。
+                    params.degradationPreference = 'balanced';
+                    
+                    sender.setParameters(params).catch(e => console.warn("API参数设置失败", e));
                 }
             }); 
             
             const o = await pc.createOffer(); 
+            o.sdp = sdpFilter(o.sdp); 
             await pc.setLocalDescription(o); 
             channel.trigger('client-offer', o); 
         }
@@ -341,7 +376,8 @@
             
                 const room = (els.roomInput && els.roomInput.value) || "Nth2Miss"; 
                 await initApp(room);
-                const res = getPref('resolution'), fps = parseInt(getPref('fps'));
+                const res = getPref('resolution') || '1080';
+                const fps = parseInt(getPref('fps') || '30');
                 try {
                     localStream = await navigator.mediaDevices.getDisplayMedia({ 
                         video: { 
@@ -355,7 +391,6 @@
                     });
                     
                     const vt = localStream.getVideoTracks()[0]; 
-                    vt.contentHint = getPref('scene') || 'detail';
                     
                     els.v.srcObject = localStream; 
                     els.v.classList.remove('hidden'); 
