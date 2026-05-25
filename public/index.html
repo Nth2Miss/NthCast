@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,91 +7,238 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><style>path{fill:%233b82f6}@media(prefers-color-scheme:dark){path{fill:%2360a5fa}}</style><path d='M889.6 127.488H141.696c-38.656 0-70.08 31.488-70.08 70.144v467.392c0 38.656 31.488 70.144 70.08 70.144h342.976v99.456H368.384c-18.688 0-33.792 13.888-33.792 30.976s15.104 30.976 33.792 30.976h294.592c18.688 0 33.792-13.888 33.792-30.976s-15.104-30.976-33.792-30.976H546.688v-99.456H889.6c38.656 0 70.144-31.424 70.144-70.144V197.568c0-38.592-31.424-70.08-70.144-70.08z m4.864 526.592a22.272 22.272 0 0 1-22.272 22.336H159.168a22.272 22.272 0 0 1-22.272-22.336V208.512c0-12.352 10.048-22.272 22.272-22.272h713.024c12.288 0 22.272 9.92 22.272 22.272V654.08zM566.976 313.984c-13.184-10.624-23.936-2.88-23.936 15.872v49.984h-2.176c-77.056 0-208.128 89.024-209.216 168.192 0 6.336 5.12 8.128 10.048 0 24.896-44.416 129.536-67.456 182.848-67.456h18.496v52.736c0 15.744 11.648 26.496 24.896 15.872l121.856-97.792c13.184-10.56 13.184-27.904 0-38.528l-122.816-98.88z'></path></svg>">
     <style>
-        body { background: #020617; color: #f8fafc; font-family: 'Lexend', sans-serif; overflow: hidden; }
+        /* 核心主题变量映射 */
+        :root {
+            --bg-body: #f1f5f9;
+            --bg-grid: rgba(15, 23, 42, 0.04);
+            --bg-glow: rgba(59, 130, 246, 0.08);
+            
+            /* 日间高级玻璃态 */
+            --glass-grad-start: rgba(255, 255, 255, 0.85);
+            --glass-grad-end: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(0, 0, 0, 0.04);
+            --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+            --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            
+            --panel-bg: rgba(255, 255, 255, 0.9);
+            --panel-border: rgba(0, 0, 0, 0.06);
+            --btn-group-bg: rgba(241, 245, 249, 0.8);
+            --btn-active-bg: #ffffff;
+            --btn-active-text: #3b82f6;
+            --btn-active-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --btn-active-border: rgba(0, 0, 0, 0.05);
+            --ripple-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .dark {
+            --bg-body: #040914;
+            --bg-grid: rgba(30, 41, 59, 0.3);
+            --bg-glow: rgba(29, 78, 216, 0.08);
+            
+            /* 夜间高级玻璃态 */
+            --glass-grad-start: rgba(15, 23, 42, 0.78);
+            --glass-grad-end: rgba(15, 23, 42, 0.60);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+            
+            --panel-bg: rgba(15, 23, 42, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --btn-group-bg: rgba(2, 6, 23, 0.8);
+            --btn-active-bg: rgba(30, 41, 59, 0.8);
+            --btn-active-text: #60a5fa;
+            --btn-active-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --btn-active-border: rgba(96, 165, 250, 0.3);
+            --ripple-color: rgba(96, 165, 250, 0.6);
+        }
+
+        body { 
+            background: var(--bg-body); 
+            font-family: 'Lexend', sans-serif; 
+            overflow: hidden; 
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        
+        .bg-grid {
+            position: absolute; inset: 0;
+            background-image: linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+                              linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
+            background-size: 4rem 4rem;
+            mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 20%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 20%, transparent 100%);
+            z-index: 0; pointer-events: none;
+            transition: background-image 0.4s ease;
+        }
+        .bg-glow {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80vw; height: 80vh;
+            background: radial-gradient(circle, var(--bg-glow) 0%, transparent 70%);
+            z-index: 0; pointer-events: none;
+            transition: background 0.4s ease;
+        }
+
+        /* 重构标题栏质感：渐变色 + 阴影融合 */
         .glass-header { 
-            background: rgba(15, 23, 42, 0.95); 
-            backdrop-filter: blur(20px); 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            background: linear-gradient(135deg, var(--glass-grad-start) 0%, var(--glass-grad-end) 100%);
+            backdrop-filter: blur(24px) saturate(180%); 
+            -webkit-backdrop-filter: blur(24px) saturate(180%); 
+            border-bottom: 1px solid var(--glass-border); 
+            box-shadow: var(--glass-shadow), var(--glass-inset); 
+            transition: all .4s cubic-bezier(.4,0,.2,1);
             z-index: 50; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .header-collapsed { transform: translateY(-100%); position: absolute !important; }
+        
         .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
-        .option-btn.active { background: #1e293b; color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
-        .btn-group { display: flex; background: #020617; padding: 2px; border-radius: 0.75rem; border: 1px solid #1e293b; }
-        .settings-group .option-btn { flex: 1; padding: 8px 6px; font-size: 0.75rem; font-weight: 700; border-radius: 0.6rem; color: #64748b; }
-        .settings-panel, .tooltip-content { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: top right; }
-        #headerToggle {
-            position: absolute;
-            bottom: -24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.95);
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            padding: 4px 16px;
-            cursor: pointer;
-            z-index: 60;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .option-btn.active { background: var(--btn-active-bg); color: var(--btn-active-text); border: 1px solid var(--btn-active-border); box-shadow: var(--btn-active-shadow); }
+        .btn-group { display: flex; background: var(--btn-group-bg); padding: 4px; border-radius: 0.8rem; border: 1px solid var(--glass-border); transition: background 0.4s ease; }
+        .settings-group .option-btn { flex: 1; padding: 8px 6px; font-size: 0.75rem; font-weight: 600; border-radius: 0.6rem; }
+        
+        .glass-panel { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
-        #headerToggle svg { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dark .glass-panel { box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); }
+        .settings-panel { transform-origin: top right; }
+        
+        /* 修复拉环缝隙，继承渐变属性 */
+        #headerToggle {
+            position: absolute; top: 100%; margin-top: -1px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(180deg, var(--glass-grad-end) 0%, var(--glass-grad-start) 100%); 
+            backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border); border-top: none; border-radius: 0 0 16px 16px; 
+            padding: 4px 24px; cursor: pointer; z-index: 60; display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
+            transition: background 0.4s ease, border 0.4s ease;
+        }
+        .dark #headerToggle { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2); }
+        #headerToggle svg { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .header-collapsed #headerToggle svg { transform: rotate(180deg); }
+
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+
+        @keyframes ripple-ping { 0% { transform: scale(0.6); opacity: 0.8; border-width: 2px; } 100% { transform: scale(2.8); opacity: 0; border-width: 0px; } }
+        .ripple-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 2px solid var(--ripple-color); 
+            animation: ripple-ping 3s cubic-bezier(0.1, 0, 0.3, 1) infinite;
+            transition: border-color 0.4s ease;
+        }
+        .ripple-ring:nth-child(2) { animation-delay: 1s; }
+        .ripple-ring:nth-child(3) { animation-delay: 2s; }
     </style>
 </head>
-<body class="h-screen flex flex-col">
-    <header id="mainHeader" class="glass-header w-full px-4 py-4 md:h-20 md:flex md:items-center md:justify-between shrink-0 relative">
+<body class="h-screen flex flex-col relative text-slate-800 dark:text-slate-100">
+
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <header id="mainHeader" class="glass-header w-full px-6 py-4 md:h-20 md:flex md:items-center md:justify-between shrink-0 relative">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-col">
-                <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent italic leading-none pr-2">NthScreen</h1>
-                <div class="flex items-center gap-2 mt-2">
-                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600 transition-all duration-300"></span>
-                <span id="status-text" class="text-[13px] uppercase font-black text-slate-500 tracking-[0.15em]">初始化</span>
+                <h1 class="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent italic leading-none pr-2 drop-shadow-sm transition-all duration-300">NthScreen</h1>
+                <div class="flex items-center gap-2 mt-2 ml-1">
+                    <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 transition-all duration-300"></span>
+                    <span id="status-text" class="text-[12px] uppercase font-bold text-slate-500 dark:text-slate-300 tracking-[0.2em]">初始化</span>
                 </div>
             </div>
+            
             <div class="flex items-center gap-4">
-                <div class="flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl pl-5 pr-1 py-1.5 focus-within:ring-2 focus-within:ring-blue-500/30">
-                    <input id="roomInput" type="text" placeholder="房间号..." class="bg-transparent outline-none text-base w-20 md:w-28 font-medium">
-                    <button onclick="copyRoomLink()" class="p-2 text-slate-500 hover:text-blue-400"><i data-lucide="link" class="w-5 h-5"></i></button>
+                <div class="flex items-center bg-white/60 dark:bg-slate-800/80 border border-slate-300/60 dark:border-slate-600/50 rounded-2xl pl-5 pr-1 py-1 focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:border-blue-500/50 transition-all shadow-inner">
+                    <input id="roomInput" type="text" placeholder="房间号..." class="bg-transparent outline-none text-base w-24 md:w-32 font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500">
+                    <button onclick="copyRoomLink()" class="p-2 text-slate-500 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/80" title="复制房间链接">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                    </button>
                 </div>
                 
-                <div class="relative">
-                    <button id="toggleSettings" class="p-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl transition-all"><i data-lucide="sliders" class="w-5 h-5 text-slate-400"></i></button>
-                    <div id="settingsPanel" class="settings-panel invisible opacity-0 absolute top-full right-0 mt-4 w-72 p-6 bg-slate-900 border border-slate-700 rounded-[2rem] shadow-2xl z-50">
-                        <h3 class="text-xs font-black mb-6 text-blue-400 uppercase tracking-[0.2em]">基础参数配置</h3>
-                        <div class="space-y-6 settings-group">
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">分辨率上限</label><div class="btn-group" data-group="resolution"><button class="option-btn active" data-value="1080">1080P</button><button class="option-btn" data-value="720">720P</button><button class="option-btn" data-value="default">自动</button></div></div>
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">帧率上限</label><div class="btn-group" data-group="fps"><button class="option-btn" data-value="15">15 帧</button><button class="option-btn active" data-value="30">30 帧</button><button class="option-btn" data-value="60">60 帧</button></div></div>
-                            <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">传输码率上限</label><div class="btn-group" data-group="bitrate"><button class="option-btn" data-value="3000">3M</button><button class="option-btn active" data-value="8000">8M</button><button class="option-btn" data-value="15000">15M</button></div></div>
+                <div class="relative flex items-center gap-2">
+                    <button id="themeToggleBtn" class="p-3 bg-white/60 dark:bg-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 border border-slate-200/60 dark:border-slate-600/50 rounded-2xl transition-all shadow-sm text-slate-600 dark:text-slate-200" title="切换主题">
+                        <i id="themeIcon" data-lucide="sun" class="w-5 h-5"></i>
+                    </button>
+
+                    <button id="toggleStatsBtn" class="p-3 bg-white/60 dark:bg-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 border border-slate-200/60 dark:border-slate-600/50 rounded-2xl transition-all shadow-sm text-slate-600 dark:text-slate-200" title="显示连接统计">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                    </button>
+
+                    <div class="relative">
+                        <button id="toggleSettings" class="p-3 bg-white/60 dark:bg-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 border border-slate-200/60 dark:border-slate-600/50 rounded-2xl transition-all shadow-sm text-slate-600 dark:text-slate-200">
+                            <i data-lucide="sliders" class="w-5 h-5"></i>
+                        </button>
+                        <div id="settingsPanel" class="glass-panel settings-panel invisible opacity-0 scale-95 absolute top-full right-0 mt-4 w-72 p-6 rounded-[1.5rem] z-50">
+                            <div class="flex items-center gap-2 mb-6">
+                                <i data-lucide="settings-2" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i>
+                                <h3 class="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-[0.15em]">参数配置</h3>
+                            </div>
+                            <div class="space-y-6 settings-group">
+                                <div class="space-y-3"><label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1"><i data-lucide="monitor" class="w-3 h-3"></i> 分辨率</label><div class="btn-group" data-group="resolution"><button class="option-btn text-slate-600 dark:text-slate-400 active" data-value="1080">1080P</button><button class="option-btn text-slate-600 dark:text-slate-400" data-value="720">720P</button><button class="option-btn text-slate-600 dark:text-slate-400" data-value="default">自动</button></div></div>
+                                <div class="space-y-3"><label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i> 帧率上限</label><div class="btn-group" data-group="fps"><button class="option-btn text-slate-600 dark:text-slate-400" data-value="15">15 FPS</button><button class="option-btn text-slate-600 dark:text-slate-400 active" data-value="30">30 FPS</button><button class="option-btn text-slate-600 dark:text-slate-400" data-value="60">60 FPS</button></div></div>
+                                <div class="space-y-3"><label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1"><i data-lucide="wifi" class="w-3 h-3"></i> 传输码率</label><div class="btn-group" data-group="bitrate"><button class="option-btn text-slate-600 dark:text-slate-400" data-value="3000">3 Mbps</button><button class="option-btn text-slate-600 dark:text-slate-400 active" data-value="8000">8 Mbps</button><button class="option-btn text-slate-600 dark:text-slate-400" data-value="15000">15 Mbps</button></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-3 mt-4 md:mt-0"><button id="btnShare" class="flex-1 md:flex-none bg-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm transition-all">开启共享</button><button id="btnWatch" class="flex-1 md:flex-none bg-slate-800 border border-slate-700 px-8 py-3.5 rounded-2xl font-bold text-sm">观看画面</button></div>
+        
+        <div class="flex items-center gap-3 mt-5 md:mt-0">
+            <button id="btnShare" class="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] text-white flex items-center justify-center gap-2">
+                <i data-lucide="monitor-up" class="w-4 h-4"></i> 开启共享
+            </button>
+            <button id="btnWatch" class="flex-1 md:flex-none bg-white/80 dark:bg-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300/80 dark:border-slate-600/80 px-8 py-3.5 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 text-slate-700 dark:text-slate-100 shadow-sm">
+                <i data-lucide="eye" class="w-4 h-4 text-slate-500 dark:text-slate-300"></i> 观看画面
+            </button>
+        </div>
         
         <button id="headerToggle" class="md:hidden">
-            <i id="toggleIcon" data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i>
+            <i id="toggleIcon" data-lucide="chevron-up" class="w-5 h-5 text-slate-400 dark:text-slate-300"></i>
         </button>
     </header>
 
-    <main id="main-container" class="flex-grow bg-black relative flex items-center justify-center overflow-hidden">
-        <video id="v" autoplay playsinline controls class="w-full h-full object-contain hidden"></video>
-        <div id="placeholder" class="flex flex-col items-center pointer-events-none transition-all duration-500">
-            <div class="relative mb-6"><i id="placeholder-icon" data-lucide="monitor-off" class="w-20 h-20 text-slate-900"></i><i id="loader-icon" data-lucide="loader-2" class="w-20 h-20 text-blue-500 animate-spin hidden"></i></div>
-            <p id="placeholder-text" class="text-xs tracking-[0.4em] uppercase font-black text-slate-800">无信号</p>
+    <main id="main-container" class="flex-grow relative flex items-center justify-center overflow-hidden z-10">
+        <video id="v" autoplay playsinline controls class="w-full h-full object-contain hidden z-20"></video>
+        
+        <div id="statsPanel" class="glass-panel absolute bottom-6 left-6 rounded-2xl p-5 w-64 invisible opacity-0 scale-95 z-50">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-600/50">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-500 dark:text-emerald-400"></i>
+                <span class="font-bold text-slate-800 dark:text-slate-100 tracking-wider text-xs">连接状态监控</span>
+            </div>
+            <div class="space-y-3 font-mono text-[11px]">
+                <div class="flex justify-between items-center"><span class="text-slate-500 dark:text-slate-400">角色</span> <span id="stat-role" class="text-blue-600 dark:text-blue-400 font-bold">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 dark:text-slate-400">分辨率</span> <span id="stat-res" class="text-slate-800 dark:text-slate-200">-</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 dark:text-slate-400">帧率</span> <div><span id="stat-fps" class="text-slate-800 dark:text-slate-200 font-bold">-</span> <span class="text-slate-400 dark:text-slate-500">fps</span></div></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 dark:text-slate-400">实时速率</span> <div><span id="stat-bitrate" class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">-</span> <span class="text-slate-400 dark:text-slate-500">kbps</span></div></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 dark:text-slate-400">网络延迟</span> <div><span id="stat-ping" class="text-slate-800 dark:text-slate-200 font-bold">-</span> <span class="text-slate-400 dark:text-slate-500">ms</span></div></div>
+            </div>
+        </div>
+
+        <div id="placeholder" class="flex flex-col items-center pointer-events-none transition-all duration-700 ease-out z-10">
+            <div class="relative mb-8 flex items-center justify-center animate-float">
+                <div class="absolute w-28 h-28 z-0">
+                    <div class="ripple-ring"></div>
+                    <div class="ripple-ring"></div>
+                    <div class="ripple-ring"></div>
+                </div>
+                <div class="absolute inset-0 bg-blue-500/20 blur-[40px] rounded-full z-0"></div>
+                <i id="placeholder-icon" data-lucide="monitor-off" class="w-24 h-24 text-slate-400 dark:text-slate-800 drop-shadow-2xl relative z-10 transition-colors duration-300"></i>
+                <i id="loader-icon" data-lucide="loader-2" class="w-24 h-24 text-blue-500 dark:text-blue-400 animate-spin hidden relative z-10 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)]"></i>
+            </div>
+            <p id="placeholder-text" class="text-xs tracking-[0.5em] uppercase font-black text-slate-500 dark:text-slate-600 ml-2">等待接入信号</p>
         </div>
     </main>
 
     <script>
+        // --- 核心 DOM 节点 ---
         const els = {
             header: document.getElementById('mainHeader'),
             headerToggle: document.getElementById('headerToggle'),
-            toggleIcon: document.getElementById('toggleIcon'),
             v: document.getElementById('v'),
             placeholder: document.getElementById('placeholder'),
             placeholderIcon: document.getElementById('placeholder-icon'),
@@ -106,15 +253,64 @@
         
         let CONFIG = null, pc = null, channel = null, pusher = null, localStream = null;
         let iceServersCache = null;
-        let candidateBuffer = [];
-        let pendingCandidates = []; 
-        let candidateTimeout = null;
-        let pollInterval = null;
+        let candidateBuffer = [], pendingCandidates = []; 
+        let candidateTimeout = null, pollInterval = null, statsInterval = null;
+        let lastBytes = 0, lastTime = 0;
         const STORAGE_KEY = 'nth2miss_share_prefs';
         
-        if (els.headerToggle) {
-            els.headerToggle.onclick = () => els.header.classList.toggle('header-collapsed');
+        // --- 主题切换逻辑 ---
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlEl = document.documentElement;
+
+        function applyTheme(theme) {
+            const htmlEl = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            // 逻辑反转：
+            // 如果是 dark，图标显示 moon (暗示点击切到 light)
+            // 如果是 light，图标显示 sun (暗示点击切到 dark)
+            if (theme === 'dark') {
+                htmlEl.classList.add('dark');
+                themeIcon.setAttribute('data-lucide', 'moon'); 
+            } else {
+                htmlEl.classList.remove('dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            
+            themeIcon.innerHTML = ''; 
+            if(window.lucide) lucide.createIcons();
+            localStorage.setItem('theme', theme);
         }
+
+        // 绑定点击
+        themeToggleBtn.onclick = () => {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(currentTheme);
+        };
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+        currentTheme = initialTheme;
+        applyTheme(initialTheme);
+
+        themeToggleBtn.onclick = () => {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(currentTheme);
+            
+            // 核心修复：更新 data-lucide 属性并强制刷新图标
+            if (currentTheme === 'dark') {
+                themeIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                themeIcon.setAttribute('data-lucide', 'moon');
+            }
+            // 调用 lucide 重绘所有图标
+            lucide.createIcons();
+        };
+
+        // --- 交互及状态管理 ---
+        if (els.headerToggle) els.headerToggle.onclick = () => els.header.classList.toggle('header-collapsed');
         
         function savePrefs() { 
             const prefs = { resolution: getPref('resolution'), fps: getPref('fps'), bitrate: getPref('bitrate') }; 
@@ -129,9 +325,7 @@
                 Object.keys(prefs).forEach(group => { 
                     const val = prefs[group]; 
                     const btnGroup = document.querySelector(`.btn-group[data-group="${group}"]`); 
-                    if (btnGroup) {
-                        btnGroup.querySelectorAll('.option-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === val));
-                    }
+                    if (btnGroup) btnGroup.querySelectorAll('.option-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === val));
                 }); 
             } catch(e) { console.error(e); } 
         }
@@ -141,18 +335,25 @@
             return b ? b.dataset.value : null; 
         }
         
-        const panel = document.getElementById('settingsPanel');
-        const toggleSettingsBtn = document.getElementById('toggleSettings');
-        if (toggleSettingsBtn && panel) {
-            toggleSettingsBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                panel.classList.toggle('invisible'); 
-                panel.classList.toggle('opacity-0'); 
-            };
-            document.onclick = (e) => { 
-                if (!panel.contains(e.target)) panel.classList.add('invisible', 'opacity-0'); 
-            };
-        }
+        const bindPanelToggle = (btnId, panelId) => {
+            const btn = document.getElementById(btnId);
+            const panel = document.getElementById(panelId);
+            if(btn && panel) {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    panel.classList.toggle('invisible');
+                    panel.classList.toggle('opacity-0');
+                    panel.classList.toggle('scale-95');
+                };
+                document.addEventListener('click', (e) => {
+                    if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                        panel.classList.add('invisible', 'opacity-0', 'scale-95');
+                    }
+                });
+            }
+        };
+        bindPanelToggle('toggleSettings', 'settingsPanel');
+        bindPanelToggle('toggleStatsBtn', 'statsPanel');
 
         document.querySelectorAll('.option-btn').forEach(btn => {
             btn.onclick = function() { 
@@ -162,45 +363,87 @@
                 savePrefs(); 
             };
         });
+
+        function startStats() {
+            if (statsInterval) clearInterval(statsInterval);
+            lastBytes = 0;
+            lastTime = performance.now();
+            
+            statsInterval = setInterval(async () => {
+                if (!pc || pc.connectionState !== 'connected') return;
+                try {
+                    const stats = await pc.getStats();
+                    let bytes = 0, fps = 0, width = 0, height = 0, ping = 0;
+                    let isSender = !!localStream;
+                    
+                    stats.forEach(report => {
+                        if (isSender && report.type === 'outbound-rtp' && report.kind === 'video') {
+                            bytes = report.bytesSent;
+                            fps = report.framesPerSecond || 0;
+                            width = report.frameWidth || 0;
+                            height = report.frameHeight || 0;
+                        } else if (!isSender && report.type === 'inbound-rtp' && report.kind === 'video') {
+                            bytes = report.bytesReceived;
+                            fps = report.framesPerSecond || 0;
+                            width = report.frameWidth || 0;
+                            height = report.frameHeight || 0;
+                        } else if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                            ping = report.currentRoundTripTime ? (report.currentRoundTripTime * 1000).toFixed(0) : '-';
+                        }
+                    });
+
+                    const now = performance.now();
+                    if (lastTime && bytes > 0) {
+                        const bitrate = (8 * (bytes - lastBytes)) / (now - lastTime); 
+                        document.getElementById('stat-bitrate').innerText = Math.max(0, bitrate).toFixed(0);
+                    }
+                    if (bytes > 0) {
+                        lastBytes = bytes;
+                        lastTime = now;
+                    }
+
+                    if (width && height) document.getElementById('stat-res').innerText = `${width}x${height}`;
+                    document.getElementById('stat-fps').innerText = fps ? Math.round(fps) : '-';
+                    document.getElementById('stat-ping').innerText = ping !== '-' ? ping : '-';
+                    document.getElementById('stat-role').innerText = isSender ? '发送 (共享端)' : '接收 (观众端)';
+                    
+                } catch (e) {
+                    console.warn("获取统计信息失败", e);
+                }
+            }, 1000);
+        }
+
+        function stopStats() {
+            if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
+            document.getElementById('stat-bitrate').innerText = '-';
+            document.getElementById('stat-res').innerText = '-';
+            document.getElementById('stat-fps').innerText = '-';
+            document.getElementById('stat-ping').innerText = '-';
+            document.getElementById('stat-role').innerText = '-';
+        }
         
         async function initApp(room) {
-            if (pusher) return;
+            if (pusher && channel) return; 
             try {
                 const [configRes, iceRes] = await Promise.all([fetch('/api/config'), fetch('/api/ice')]);
                 const pusherConfig = await configRes.json();
                 const iceData = await iceRes.json();
-                
                 iceServersCache = iceData.iceServers ? iceData : { iceServers: iceData };
-        
-                if (!pusherConfig.key) {
-                    log("未配置 Pusher Key", "error");
-                    return;
-                }
+                
+                if (!pusherConfig.key) { log("未配置 Pusher Key", "error"); return; }
         
                 pusher = new Pusher(pusherConfig.key, { cluster: pusherConfig.cluster, authEndpoint: "/api/auth" });
                 channel = pusher.subscribe(`private-room-${room}`);
         
                 return new Promise(resolve => {
-                    channel.bind('pusher:subscription_succeeded', () => {
-                        bindSignaling();
-                        resolve();
-                    });
+                    channel.bind('pusher:subscription_succeeded', () => { bindSignaling(); resolve(); });
                     pusher.connection.bind('error', () => log("信令连接错误", "error"));
                 });
-            } catch (e) {
-                log("初始化失败", "error");
-                console.error(e);
-            }
+            } catch (e) { log("初始化失败", "error"); console.error(e); }
         }
         
         async function applyPendingCandidates() {
-            for (let c of pendingCandidates) {
-                try {
-                    await pc.addIceCandidate(c);
-                } catch (e) {
-                    console.warn('添加候选者失败', e);
-                }
-            }
+            for (let c of pendingCandidates) { try { await pc.addIceCandidate(c); } catch (e) { console.warn(e); } }
             pendingCandidates = [];
         }
         
@@ -212,32 +455,20 @@
                     await applyPendingCandidates(); 
                     const a = await pc.createAnswer(); 
                     await pc.setLocalDescription(a); 
-                    channel.trigger('client-answer', a); 
+                    channel?.trigger('client-answer', a); 
                 } 
             });
-            
             channel.bind('client-answer', async (a) => { 
-                if (pc) {
-                    await pc.setRemoteDescription(new RTCSessionDescription(a)); 
-                    await applyPendingCandidates(); 
-                }
+                if (pc) { await pc.setRemoteDescription(new RTCSessionDescription(a)); await applyPendingCandidates(); }
             });
-            
-            channel.bind('client-request-offer', () => { 
-                if (localStream) sendSignal(); 
-            });
-            
+            channel.bind('client-request-offer', () => { if (localStream) sendSignal(); });
             channel.bind('client-stop-share', () => resetView());
-            
             channel.bind('client-candidate-batch', (d) => { 
                 if (pc && d.candidates) {
                     d.candidates.forEach(c => {
                         const candidate = new RTCIceCandidate(c);
-                        if (pc.remoteDescription) {
-                            pc.addIceCandidate(candidate).catch(e => console.warn(e)); 
-                        } else {
-                            pendingCandidates.push(candidate); 
-                        }
+                        if (pc.remoteDescription) pc.addIceCandidate(candidate).catch(e => console.warn(e)); 
+                        else pendingCandidates.push(candidate); 
                     });
                 }
             });
@@ -246,25 +477,17 @@
         async function createPC() {
             if (pc) pc.close();
             pendingCandidates = [];
-            
             let servers = iceServersCache.iceServers;
             if (servers && servers.iceServers) servers = servers.iceServers;
         
-            pc = new RTCPeerConnection({ 
-                iceServers: servers,
-                // 核心改动 1：设为 'all'，自动协商路由，能直连就直连，不行就自动走中继
-                iceTransportPolicy: 'all' 
-            });
+            pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: 'all' });
         
             pc.onconnectionstatechange = () => { 
                 if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                    if (localStream) {
-                        log("等待观众加入...", "loading");
-                    } else {
-                        resetView();
-                    }
+                    if (localStream) log("等待观众加入...", "loading"); else resetView();
                 } else if (pc.connectionState === 'connected') {
                     log("连接成功", "success");
+                    startStats(); 
                 }
             };
         
@@ -274,14 +497,14 @@
                 clearTimeout(candidateTimeout);
                 candidateTimeout = setTimeout(() => { 
                     if (candidateBuffer.length > 0) { 
-                        channel.trigger('client-candidate-batch', { candidates: candidateBuffer }); 
+                        channel?.trigger('client-candidate-batch', { candidates: candidateBuffer }); 
                         candidateBuffer = []; 
                     } 
                 }, 100); 
             };
         
             pc.ontrack = (e) => { 
-                els.placeholderText.innerText = "同步信号..."; 
+                els.placeholderText.innerText = "正在同步画面..."; 
                 setTimeout(() => { 
                     log("正在观看", "success"); 
                     els.v.classList.remove('hidden'); 
@@ -297,108 +520,74 @@
             try {
                 let lines = sdp.split(/\r?\n/);
                 let videoIndex = lines.findIndex(l => l.startsWith('m=video'));
-
                 if (videoIndex !== -1) {
                     let insertPos = videoIndex + 1;
                     for (let i = videoIndex + 1; i < lines.length; i++) {
                         if (lines[i].startsWith('m=')) break; 
                         if (lines[i].startsWith('c=IN')) insertPos = i + 1;
                     }
-                    if (!lines.some(l => l.startsWith('b=AS:'))) {
-                        lines.splice(insertPos, 0, `b=AS:${bitrate}`);
-                    }
+                    if (!lines.some(l => l.startsWith('b=AS:'))) lines.splice(insertPos, 0, `b=AS:${bitrate}`);
                 }
-
                 let modifiedSdp = lines.join('\r\n');
-
-                // 核心改动 2：安全平衡的底线码率（1200kbps）。
-                // 这个数值既能保证画面看得清（不过分马赛克），又不会因为过高导致网络拥塞而直接断线。
                 const minBitrate = '1200';
-                
-                modifiedSdp = modifiedSdp.replace(
-                    /(a=fmtp:\d+\s+.*packetization-mode=1.*)/g,
-                    (match) => {
-                        if (match.includes('x-google-min-bitrate')) return match;
-                        return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
-                    }
-                );
-
-                modifiedSdp = modifiedSdp.replace(
-                    /(a=fmtp:\d+\s+)(?!.*packetization-mode)(?!.*apt=)(.*)/g,
-                    (match, p1, p2) => {
-                        if (match.includes('x-google-') || match.includes('level-asymmetry')) return match;
-                        return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
-                    }
-                );
-
+                modifiedSdp = modifiedSdp.replace(/(a=fmtp:\d+\s+.*packetization-mode=1.*)/g, (match) => {
+                    if (match.includes('x-google-min-bitrate')) return match;
+                    return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
+                });
+                modifiedSdp = modifiedSdp.replace(/(a=fmtp:\d+\s+)(?!.*packetization-mode)(?!.*apt=)(.*)/g, (match, p1, p2) => {
+                    if (match.includes('x-google-') || match.includes('level-asymmetry')) return match;
+                    return `${match};x-google-min-bitrate=${minBitrate};x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`;
+                });
                 return modifiedSdp.endsWith('\r\n') ? modifiedSdp : modifiedSdp + '\r\n';
-            } catch (e) {
-                console.warn("SDP 注入失败，使用默认", e);
-                return sdp;
-            }
+            } catch (e) { return sdp; }
         };
 
         async function sendSignal() { 
             if(!localStream) return;
             await createPC(); 
-            
             localStream.getTracks().forEach(t => {
                 const sender = pc.addTrack(t, localStream);
-                
                 if (t.kind === 'video') {
                     const params = sender.getParameters();
                     if (!params.encodings) params.encodings = [{}];
-                    
-                    const maxBitrate = parseInt(getPref('bitrate') || '8000') * 1000;
-                    params.encodings[0].maxBitrate = maxBitrate;
-                    
-                    // 核心改动 3：自动平衡策略 'balanced'。
-                    // 放弃极端的保分辨率或保帧率，让浏览器根据网速智能双向妥协，达到最佳观感。
+                    params.encodings[0].maxBitrate = parseInt(getPref('bitrate') || '8000') * 1000;
                     params.degradationPreference = 'balanced';
-                    
-                    sender.setParameters(params).catch(e => console.warn("API参数设置失败", e));
+                    sender.setParameters(params).catch(e => console.warn(e));
                 }
             }); 
-            
             const o = await pc.createOffer(); 
             o.sdp = sdpFilter(o.sdp); 
             await pc.setLocalDescription(o); 
-            channel.trigger('client-offer', o); 
+            channel?.trigger('client-offer', o); 
         }
         
         if (els.btnShare) {
             els.btnShare.onclick = async () => {
                 if (localStream) {
-                    channel.trigger('client-stop-share', { room: els.roomInput ? els.roomInput.value : "Nth2Miss" }); 
-                    resetView();
-                    return;
+                    channel?.trigger('client-stop-share', { room: els.roomInput ? els.roomInput.value : "Nth2Miss" }); 
+                    resetView(); return;
                 }
-            
                 const room = (els.roomInput && els.roomInput.value) || "Nth2Miss"; 
                 await initApp(room);
+                
+                if (!channel) { log("无法连接信令服务器，请检查配置", "error"); return; }
+
                 const res = getPref('resolution') || '1080';
                 const fps = parseInt(getPref('fps') || '30');
                 try {
                     localStream = await navigator.mediaDevices.getDisplayMedia({ 
-                        video: { 
-                            width: { ideal: res === '1080' ? 1920 : 1280 }, 
-                            height: { ideal: res === '1080' ? 1080 : 720 }, 
-                            frameRate: { ideal: fps }, 
-                            cursor: "always",
-                            displaySurface: "monitor" 
-                        }, 
+                        video: { width: { ideal: res === '1080' ? 1920 : 1280 }, height: { ideal: res === '1080' ? 1080 : 720 }, frameRate: { ideal: fps }, cursor: "always", displaySurface: "monitor" }, 
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
                     });
-                    
                     const vt = localStream.getVideoTracks()[0]; 
-                    
-                    els.v.srcObject = localStream; 
-                    els.v.classList.remove('hidden'); 
-                    els.placeholder.classList.add('hidden');
+                    els.v.srcObject = localStream; els.v.classList.remove('hidden'); els.placeholder.classList.add('hidden');
                     log("等待观众", "loading"); 
                     
-                    els.btnShare.innerText = "停止共享";
-                    els.btnShare.classList.replace('bg-blue-600', 'bg-red-600');
+                    els.btnShare.innerHTML = '<i data-lucide="square" class="w-4 h-4 fill-current"></i> 停止共享';
+                    els.btnShare.classList.replace('from-blue-600', 'from-red-500'); els.btnShare.classList.replace('to-indigo-500', 'to-rose-500');
+                    els.btnShare.classList.replace('hover:from-blue-500', 'hover:from-red-400'); els.btnShare.classList.replace('hover:to-indigo-400', 'hover:to-rose-400');
+                    els.btnShare.classList.replace('shadow-[0_0_20px_rgba(59,130,246,0.3)]', 'shadow-[0_0_20px_rgba(239,68,68,0.3)]');
+                    lucide.createIcons();
                     
                     sendSignal();
                     vt.onended = () => resetView();
@@ -409,57 +598,51 @@
         if (els.btnWatch) {
             els.btnWatch.onclick = async () => {
                 const room = (els.roomInput && els.roomInput.value) || "Nth2Miss";
-                els.placeholderIcon.classList.add('hidden'); 
-                els.loaderIcon.classList.remove('hidden'); 
-                els.placeholderText.innerText = "寻找信号...";
+                els.placeholderIcon.classList.add('hidden'); els.loaderIcon.classList.remove('hidden'); 
+                document.querySelectorAll('.ripple-ring').forEach(el => el.classList.add('hidden')); 
+                els.placeholderText.innerText = "正在寻找信号...";
+                
                 await initApp(room); 
                 
+                if (!channel) { log("无法连接信令服务器", "error"); resetView(); return; }
+
                 if(pollInterval) clearInterval(pollInterval);
-                
-                channel.trigger('client-request-offer', { ready: true });
+                channel?.trigger('client-request-offer', { ready: true });
                 
                 let attempt = 0;
                 pollInterval = setInterval(() => { 
-                    if (pc && pc.connectionState === 'connected') {
-                        clearInterval(pollInterval);
-                        return;
-                    }
-                    if (attempt > 4) {
-                        log("未收到信号，请检查发送端", "error");
-                        clearInterval(pollInterval);
-                        return;
-                    }
-                    log("同步中...", "loading"); 
-                    channel.trigger('client-request-offer', { ready: true }); 
+                    if (pc && pc.connectionState === 'connected') { clearInterval(pollInterval); return; }
+                    if (attempt > 4) { log("未收到信号", "error"); clearInterval(pollInterval); resetView(); return; }
+                    log("同步信号中...", "loading"); 
+                    channel?.trigger('client-request-offer', { ready: true }); 
                     attempt++;
                 }, 4000);
             };
         }
         
         function resetView() { 
+            stopStats(); 
             if (pollInterval) clearInterval(pollInterval);
-            if (els.v) {
-                els.v.pause(); 
-                els.v.srcObject = null; 
-                els.v.classList.add('hidden'); 
-            }
+            if (els.v) { els.v.pause(); els.v.srcObject = null; els.v.classList.add('hidden'); }
             if (els.placeholder) els.placeholder.classList.remove('hidden'); 
             if (els.loaderIcon) els.loaderIcon.classList.add('hidden'); 
             if (els.placeholderIcon) els.placeholderIcon.classList.remove('hidden'); 
-            if (els.placeholderText) els.placeholderText.innerText = "无信号"; 
+            document.querySelectorAll('.ripple-ring').forEach(el => el.classList.remove('hidden')); 
+            if (els.placeholderText) els.placeholderText.innerText = "等待接入信号"; 
             
             if (els.btnShare) {
-                els.btnShare.innerText = "开启共享";
-                els.btnShare.classList.replace('bg-red-600', 'bg-blue-600');
+                els.btnShare.innerHTML = '<i data-lucide="monitor-up" class="w-4 h-4"></i> 开启共享';
+                els.btnShare.classList.replace('from-red-500', 'from-blue-600'); els.btnShare.classList.replace('to-rose-500', 'to-indigo-500');
+                els.btnShare.classList.replace('hover:from-red-400', 'hover:from-blue-500'); els.btnShare.classList.replace('hover:to-rose-400', 'hover:to-indigo-400');
+                els.btnShare.classList.replace('shadow-[0_0_20px_rgba(239,68,68,0.3)]', 'shadow-[0_0_20px_rgba(59,130,246,0.3)]');
+                if (window.lucide) lucide.createIcons(); 
             }
-            
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            
+            if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
             if (pc) { pc.close(); pc = null; }
-            log("就绪", "success"); 
+            
+            if(els.statusText && !els.statusText.innerText.includes("配置") && !els.statusText.innerText.includes("拒绝")) {
+                log("就绪", "success"); 
+            }
         }
         
         function copyRoomLink() { 
@@ -467,17 +650,16 @@
             const url = window.location.origin + window.location.pathname + "?room=" + encodeURIComponent(r); 
             navigator.clipboard.writeText(url).then(() => { 
                 const old = els.statusText ? els.statusText.innerText : ""; 
-                log("已复制", "success"); 
-                setTimeout(() => log(old, "success"), 2000); 
+                log("链接已复制", "success"); setTimeout(() => log(old, "success"), 2000); 
             }); 
         }
         
         function log(m, t) { 
             if(els.statusText) els.statusText.innerText = m; 
             if(els.statusDot) {
-                els.statusDot.className = `w-2 h-2 rounded-full ${
-                    t === 'success' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
-                    t === 'error' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'
+                els.statusDot.className = `w-2.5 h-2.5 rounded-full transition-all duration-500 ${
+                    t === 'success' ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]' : 
+                    t === 'error' ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]' : 'bg-blue-500 animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.6)]'
                 }`;
             }
         }
@@ -489,7 +671,7 @@
             if (window.lucide) lucide.createIcons();
             if (els.btnShare) { els.btnShare.disabled = false; els.btnShare.classList.remove('opacity-50'); }
             if (els.btnWatch) { els.btnWatch.disabled = false; els.btnWatch.classList.remove('opacity-50'); }
-            log("就绪", "success");
+            log("系统就绪", "success");
         };    
     </script>
 </body>
