@@ -309,7 +309,6 @@
             };
         }
         
-        const sdpFilter = (sdp) => {
             const bitrate = getPref('bitrate'); 
             if (!bitrate) return sdp;
         
@@ -334,11 +333,27 @@
         async function sendSignal() { 
             if(!localStream) return;
             await createPC(); 
-            localStream.getTracks().forEach(t => pc.addTrack(t, localStream)); 
+            
+            localStream.getTracks().forEach(t => {
+                const sender = pc.addTrack(t, localStream);
+                
+                // 核心修复：使用现代 API 强制设定最大码率，抛弃不稳定的 SDP 替换
+                if (t.kind === 'video') {
+                    const params = sender.getParameters();
+                    if (!params.encodings) params.encodings = [{}];
+                    
+                    // 将面板设置的 Kbps 转换为 bps (例如选择 8M = 8000 * 1000 bps)
+                    const maxBitrate = parseInt(getPref('bitrate') || '8000') * 1000;
+                    params.encodings[0].maxBitrate = maxBitrate;
+                    
+                    // 写入底层参数
+                    sender.setParameters(params).catch(e => console.warn("动态码率设置失败", e));
+                }
+            }); 
+            
             const o = await pc.createOffer(); 
-            o.sdp = sdpFilter(o.sdp); 
             await pc.setLocalDescription(o); 
-            channel.trigger('client-offer', o); 
+            channel.trigger('client-offer', o);
         }
         
         if (els.btnShare) {
