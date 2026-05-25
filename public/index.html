@@ -128,7 +128,6 @@
         let pollInterval = null;
         const STORAGE_KEY = 'nth2miss_share_prefs';
         
-        // 增加容错判断，防止找不到元素时报错中止运行
         if (els.headerToggle) {
             els.headerToggle.onclick = () => els.header.classList.toggle('header-collapsed');
         }
@@ -228,7 +227,6 @@
                     await pc.setRemoteDescription(new RTCSessionDescription(o)); 
                     await applyPendingCandidates(); 
                     const a = await pc.createAnswer(); 
-                    a.sdp = sdpFilter(a.sdp); 
                     await pc.setLocalDescription(a); 
                     channel.trigger('client-answer', a); 
                 } 
@@ -309,27 +307,6 @@
             };
         }
         
-            const bitrate = getPref('bitrate'); 
-            if (!bitrate) return sdp;
-        
-            try {
-                let lines = sdp.split('\r\n');
-                let videoIndex = lines.findIndex(l => l.startsWith('m=video'));
-                
-                if (videoIndex !== -1) {
-                    lines.splice(videoIndex + 1, 0, `b=AS:${bitrate}`);
-                }
-        
-                return lines.join('\r\n').replace(
-                    /a=fmtp:(\d+) (.*packetization-mode=1.*)/g, 
-                    m => m + `;x-google-min-bitrate=1000;x-google-start-bitrate=${bitrate};x-google-max-bitrate=${bitrate}`
-                );
-            } catch(e) {
-                console.warn("SDP过滤失败，回退默认设置", e);
-                return sdp;
-            }
-        };
-        
         async function sendSignal() { 
             if(!localStream) return;
             await createPC(); 
@@ -337,23 +314,21 @@
             localStream.getTracks().forEach(t => {
                 const sender = pc.addTrack(t, localStream);
                 
-                // 核心修复：使用现代 API 强制设定最大码率，抛弃不稳定的 SDP 替换
+                // 动态强制设定最大发送码率 API
                 if (t.kind === 'video') {
                     const params = sender.getParameters();
                     if (!params.encodings) params.encodings = [{}];
                     
-                    // 将面板设置的 Kbps 转换为 bps (例如选择 8M = 8000 * 1000 bps)
                     const maxBitrate = parseInt(getPref('bitrate') || '8000') * 1000;
                     params.encodings[0].maxBitrate = maxBitrate;
                     
-                    // 写入底层参数
                     sender.setParameters(params).catch(e => console.warn("动态码率设置失败", e));
                 }
             }); 
             
             const o = await pc.createOffer(); 
             await pc.setLocalDescription(o); 
-            channel.trigger('client-offer', o);
+            channel.trigger('client-offer', o); 
         }
         
         if (els.btnShare) {
